@@ -37,12 +37,16 @@ class OPPaymentEntity {
   String? customerEmail;
   String? customerId;
   late String returnUrl = "$urlSchemes://onepay/";
+  String? codeRef;
+  String? LINK_PAYGATE;
+  String? vpc_CardList;
+  String? vpc_theme;
 
   static const VERSION_PAYGATE = "2";
   static const COMMAND_PAYGATE = "pay";
   static const AGAIN_LINK = "https://localhost/again_link";
   static const TICKET_NO = "10.2.20.1";
-  static const LINK_PAYGATE = "https://mtf.onepay.vn/paygate/vpcpay.op";
+  // static const LINK_PAYGATE = "https://mtf.onepay.vn/paygate/vpcpay.op";
   //static const LINK_PAYGATE = "https://onepay.vn/paygate/vpcpay.op";
   static const VPC_THEME = "general";
 
@@ -57,6 +61,10 @@ class OPPaymentEntity {
     this.customerPhone,
     this.customerEmail,
     this.customerId,
+    String? codeRef,
+    String? LINK_PAYGATE,
+    String? vpc_CardList,
+    String? vpc_theme,
   });
 
   String createUrlPayment() {
@@ -80,9 +88,13 @@ class OPPaymentEntity {
       "vpc_TicketNo": ticketNo,
       "Title": title,
       "vpc_Currency": currency.name.toUpperCase(),
-      "vpc_Theme": VPC_THEME,
+      "vpc_Theme": vpc_theme != null ? vpc_theme! : VPC_THEME,
       "AgainLink": AGAIN_LINK,
     };
+
+    if (codeRef != null) {
+      queries["vpc_MerchTxnRef"] = codeRef!;
+    }
     if (customerPhone != null) {
       queries["vpc_Customer_Phone"] = customerPhone!;
     }
@@ -92,8 +104,12 @@ class OPPaymentEntity {
     if (customerId != null) {
       queries["vpc_Customer_Id"] = customerId!;
     }
+    if (vpc_CardList != null) {
+      queries["vpc_CardList"] = vpc_CardList!;
+    }
     queries["vpc_SecureHash"] = secureHashQueries(queries, hashKey);
-    var queryString = queries.entries.map((e) => "${e.key}=${e.value}").join("&");
+    var queryString =
+        queries.entries.map((e) => "${e.key}=${e.value}").join("&");
     // var uri = Uri.parse("$LINK_PAYGATE?$queryString");
     // var encodeQueryString = Uri.encodeQueryComponent(queryString);
     var uri = Uri.encodeFull("$LINK_PAYGATE?$queryString");
@@ -102,7 +118,8 @@ class OPPaymentEntity {
     return uri;
   }
 
-  String secureHashQueries(Map<String, String> queries, String hashKeyCustomer) {
+  String secureHashQueries(
+      Map<String, String> queries, String hashKeyCustomer) {
     var key = <int>[];
     var hashKeyCharacters = hashKeyCustomer.characters;
     for (var i = 0; i < hashKeyCharacters.length; i += 2) {
@@ -115,7 +132,8 @@ class OPPaymentEntity {
     // var key = utf8.encode(hashKeyCustomer);
     // print("$hashKeyCustomer: $key");
     // print(int.parse(hashKeyCustomer, radix: 16));
-    var mapQueries = SplayTreeMap<String, String>.from(queries, (a, b) => a.compareTo(b));
+    var mapQueries =
+        SplayTreeMap<String, String>.from(queries, (a, b) => a.compareTo(b));
     var queryString = mapQueries.entries
         .map((e) {
           if (e.key.startsWith("vpc_")) {
@@ -188,7 +206,17 @@ class OnePayPaygate {
     }
   }
 
-  static void open({required BuildContext context, required OPPaymentEntity entity, OnPayResult? onPayResult, OnPayFail? onPayFail}) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => OnePayPaygateView(paymentEntity: entity, onPayResult: onPayResult, onPayFail: onPayFail)));
+  static void open(
+      {required BuildContext context,
+      required OPPaymentEntity entity,
+      OnPayResult? onPayResult,
+      OnPayFail? onPayFail}) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => OnePayPaygateView(
+                paymentEntity: entity,
+                onPayResult: onPayResult,
+                onPayFail: onPayFail)));
   }
 }
